@@ -143,6 +143,16 @@ export const authAPI = {
 
   getMe: () => api.get<User>('/auth/me'),
   getShops: () => api.get<Shop[]>('/auth/shops'),
+  logout: async () => {
+    try {
+      await api.post<boolean>('/auth/logout', {});
+    } catch (e) {
+      // Ignore network errors on logout
+    } finally {
+      setAuthToken(null);
+      setSelectedShopId(null);
+    }
+  }
 };
 
 export const dashboardAPI = {
