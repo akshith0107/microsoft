@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #F5F4EF;
+    color: #111111;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.015em;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F4EF;
+}
+::-webkit-scrollbar-thumb {
+  background: #111111;
+  border-radius: 0px;
+}
+
+/* Brutalist Offset Shadows */
+.brutal-shadow {
+  box-shadow: 4px 4px 0px #111111;
+}
+
+.brutal-shadow-sm {
+  box-shadow: 2px 2px 0px #111111;
+}
+
+.brutal-accent {
+  box-shadow: 4px 4px 0px #F4C84A;
+}
+
+
+.brutal-btn {
+  transition: transform 100ms ease, box-shadow 100ms ease;
+}
+.brutal-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0px #111111;
+}
+.brutal-btn:active {
+  transform: translate(0px, 0px);
+  box-shadow: 2px 2px 0px #111111;
+}
+
+/* Borders */
+.border-b-brutal {
+  border-bottom: 1px solid #111111;
+}
+.border-r-brutal {
+  border-right: 1px solid #111111;
+}
+.border-brutal {
+  border: 1px solid #111111;
+}
+.border-brutal-2 {
+  border: 2px solid #111111;
+}
