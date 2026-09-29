@@ -347,8 +347,34 @@ export interface ExpenseRead {
   payment_method: string;
 }
 
+export interface ForecastFactor {
+  factor: string;
+  impact: string;
+  explanation: string;
+}
+
+export interface ForecastResultRead {
+  product_id: string;
+  product_name: string;
+  base_forecast: number;
+  adapted_forecast: number;
+  forecast_7d: number;
+  daily_average: number;
+  stock_coverage_days: number;
+  stockout_risk: number;
+  recommended_order_quantity: number;
+  confidence: number;
+  anomaly_detected?: boolean;
+  change_point_detected?: boolean;
+  anomaly_direction?: string;
+  requires_owner_context?: boolean;
+  factors: ForecastFactor[];
+}
+
 export const analyticsAPI = {
   getForecast: (productId: string) => api.get<ForecastResultRead>(`/analytics/forecast/${productId}`),
+  confirmForecastContext: (productId: string, data: { event_title: string; event_type?: string; description: string }) =>
+    api.post<ForecastResultRead>(`/analytics/forecast/${productId}/context`, data),
 };
 
 export const recommendationsAPI = {

@@ -95,7 +95,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     if (error instanceof APIError) {
       throw error;
     }
-    throw new APIError(error.message || 'Network communication error', 'NETWORK_ERROR', 0);
+    const msg = error.message === 'Failed to fetch'
+      ? 'Cannot connect to backend server. Please verify FastAPI backend server is running on http://localhost:8000.'
+      : (error.message || 'Network communication error');
+    throw new APIError(msg, 'NETWORK_ERROR', 0);
   }
 }
 

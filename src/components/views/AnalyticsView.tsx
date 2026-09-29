@@ -59,6 +59,8 @@ export const AnalyticsView: React.FC = () => {
       setForecast({
         product_id: pid,
         product_name: selectedProd?.name || 'Selected SKU',
+        base_forecast: 45,
+        adapted_forecast: 55,
         forecast_7d: 55,
         daily_average: 7.8,
         stock_coverage_days: 2.3,

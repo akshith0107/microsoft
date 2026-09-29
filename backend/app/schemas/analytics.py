@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DashboardSummaryRead(BaseModel):
@@ -30,10 +30,22 @@ class ForecastFactor(BaseModel):
 class ForecastResultRead(BaseModel):
     product_id: str
     product_name: str
+    base_forecast: float = 0.0
+    adapted_forecast: float = 0.0
     forecast_7d: float
     daily_average: float
     stock_coverage_days: float
     stockout_risk: float
     recommended_order_quantity: float
     confidence: float
+    anomaly_detected: bool = False
+    change_point_detected: bool = False
+    anomaly_direction: Optional[str] = None
+    requires_owner_context: bool = False
     factors: List[ForecastFactor] = []
+
+
+class ConfirmEventContextRequest(BaseModel):
+    event_title: str = Field(..., min_length=2, max_length=255)
+    event_type: str = Field("BUSINESS_EVENT", max_length=50)
+    description: str = Field(..., min_length=3)

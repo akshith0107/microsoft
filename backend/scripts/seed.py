@@ -56,7 +56,7 @@ async def seed_database():
 
         owner = User(
             name="Rajesh Kumar",
-            email="owner@sharmastore.test",
+            email="owner@sharmastore.com",
             phone="+919876543210",
             password_hash=pwd_hash,
             preferred_language="hinglish",
@@ -66,7 +66,7 @@ async def seed_database():
         )
         staff = User(
             name="Amit Kumar",
-            email="staff@sharmastore.test",
+            email="staff@sharmastore.com",
             phone="+919876543211",
             password_hash=pwd_hash,
             preferred_language="hi",
@@ -80,7 +80,7 @@ async def seed_database():
             name="Sharma General Store",
             owner_id=owner.id,
             phone="+919876543210",
-            email="owner@sharmastore.test",
+            email="owner@sharmastore.com",
             address_line1="12, Main Market Road",
             city="New Delhi",
             state="Delhi",
