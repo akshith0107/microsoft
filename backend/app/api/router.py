@@ -24,6 +24,7 @@ from app.api.analytics import router as analytics_router
 from app.api.memory import router as memory_router
 from app.api.weather import router as weather_router
 from app.api.market import router as market_router
+from app.api.predictions import router as predictions_router
 
 api_router = APIRouter()
 
@@ -54,3 +55,4 @@ api_router.include_router(analytics_router)
 api_router.include_router(memory_router)
 api_router.include_router(weather_router)
 api_router.include_router(market_router)
+api_router.include_router(predictions_router)
