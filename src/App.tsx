@@ -16,11 +16,8 @@ import { SearchModal } from './components/modals/SearchModal';
 import { AIAdvisorModal, FloatingAIButton } from './components/ai/AIAdvisorModal';
 import { ReceiptScannerModal } from './components/modals/ReceiptScannerModal';
 import { AddProductModal } from './components/modals/AddProductModal';
-import { LoginPage } from './components/auth/LoginPage';
-import { SignUpPage } from './components/auth/SignUpPage';
-import { authAPI, User, Shop, TokenResponse } from './api/services';
-import { getAuthToken, setAuthToken, getSelectedShopId, setSelectedShopId } from './api/client';
-import { Loader2, Store } from 'lucide-react';
+import { authAPI, User, Shop } from './api/services';
+import { getAuthToken, getSelectedShopId, setSelectedShopId } from './api/client';
 
 export function App() {
   // Navigation & UI state
@@ -28,10 +25,24 @@ export function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Authentication & Session state
-  const [authMode, setAuthMode] = useState<'AUTH_CHECK' | 'LOGIN' | 'SIGNUP' | 'AUTHENTICATED'>('AUTH_CHECK');
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [availableShops, setAvailableShops] = useState<Shop[]>([]);
-  const [currentShop, setCurrentShop] = useState<Shop | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>({
+    id: 'demo-user-id',
+    name: 'Rajesh Kumar (Store Owner)',
+    email: 'owner@sharmastore.com',
+    preferred_language: 'en'
+  });
+  const [availableShops, setAvailableShops] = useState<Shop[]>([{
+    id: 'demo-shop-id',
+    name: 'Sharma General Store',
+    owner_id: 'demo-user-id',
+    currency: 'INR'
+  }]);
+  const [currentShop, setCurrentShop] = useState<Shop | null>({
+    id: 'demo-shop-id',
+    name: 'Sharma General Store',
+    owner_id: 'demo-user-id',
+    currency: 'INR'
+  });
 
   // Modals state
   const [billingModalOpen, setBillingModalOpen] = useState(false);
@@ -56,66 +67,22 @@ export function App() {
 
   const checkSession = async () => {
     const token = getAuthToken();
-    if (!token) {
-      setAuthMode('LOGIN');
-      return;
-    }
+    if (!token) return;
 
     try {
       const user = await authAPI.getMe();
       const shops = await authAPI.getShops();
 
-      setCurrentUser(user);
-      setAvailableShops(shops);
-
-      let selectedId = getSelectedShopId();
-      let active = shops.find((s) => s.id === selectedId);
-
-      if (!active && shops.length > 0) {
-        active = shops[0];
+      if (user) setCurrentUser(user);
+      if (shops && shops.length > 0) {
+        setAvailableShops(shops);
+        let selectedId = getSelectedShopId();
+        let active = shops.find((s) => s.id === selectedId) || shops[0];
+        setCurrentShop(active);
         setSelectedShopId(active.id);
       }
-
-      setCurrentShop(active || null);
-      setAuthMode('AUTHENTICATED');
     } catch (err: any) {
-      console.warn('Session check failed or expired:', err);
-      setAuthToken(null);
-      setSelectedShopId(null);
-      setCurrentUser(null);
-      setCurrentShop(null);
-      setAuthMode('LOGIN');
-    }
-  };
-
-  const handleAuthSuccess = async (res: TokenResponse) => {
-    try {
-      if (res.access_token) {
-        setAuthToken(res.access_token);
-      }
-      if (res.shop_id) {
-        setSelectedShopId(res.shop_id);
-      }
-
-      const user = await authAPI.getMe();
-      const shops = await authAPI.getShops();
-
-      setCurrentUser(user);
-      setAvailableShops(shops);
-
-      let selectedId = res.shop_id || getSelectedShopId();
-      let active = shops.find((s) => s.id === selectedId);
-      if (!active && shops.length > 0) {
-        active = shops[0];
-        setSelectedShopId(active.id);
-      }
-
-      setCurrentShop(active || null);
-      setAuthMode('AUTHENTICATED');
-      showToast(`Welcome back, ${user.name}!`);
-    } catch (e: any) {
-      console.error('Post-auth setup error:', e);
-      setAuthMode('AUTHENTICATED');
+      console.warn('Backend API connection check fallback:', err);
     }
   };
 
@@ -129,51 +96,16 @@ export function App() {
   };
 
   const handleLogout = async () => {
-    await authAPI.logout();
-    setCurrentUser(null);
-    setCurrentShop(null);
-    setAvailableShops([]);
-    setAuthMode('LOGIN');
-    showToast("Logged out of shop account.");
+    try {
+      await authAPI.logout();
+    } catch (e) {}
+    showToast("Store session refreshed.");
   };
 
   const handleOpenAIAdvisor = (query?: string) => {
     setAiInitialQuery(query);
     setAiAdvisorOpen(true);
   };
-
-  if (authMode === 'AUTH_CHECK') {
-    return (
-      <div className="min-h-screen bg-[#F5F4EF] flex flex-col items-center justify-center p-4 font-mono text-[#111111]">
-        <div className="flex flex-col items-center gap-3 p-8 bg-white border-2 border-[#111111] shadow-[6px_6px_0_#111111] rounded-[10px]">
-          <div className="w-10 h-10 rounded-[6px] bg-[#F4C84A] border border-[#111111] flex items-center justify-center font-bold text-[#111111]">
-            <Store className="w-6 h-6" />
-          </div>
-          <Loader2 className="w-6 h-6 animate-spin text-[#111111] mt-1" />
-          <div className="font-bold text-xs uppercase tracking-wider">VERIFYING SHOP SESSION...</div>
-          <div className="text-[10px] text-[#6B6B6B]">DukaanPulse Authentication System</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (authMode === 'LOGIN') {
-    return (
-      <LoginPage
-        onSuccess={handleAuthSuccess}
-        onSwitchToSignUp={() => setAuthMode('SIGNUP')}
-      />
-    );
-  }
-
-  if (authMode === 'SIGNUP') {
-    return (
-      <SignUpPage
-        onSuccess={handleAuthSuccess}
-        onSwitchToLogin={() => setAuthMode('LOGIN')}
-      />
-    );
-  }
 
   const renderCurrentView = () => {
     switch (activeView) {
