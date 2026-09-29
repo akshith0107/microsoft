@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
@@ -12,6 +13,14 @@ from app.api.router import api_router
 async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("Starting Kirana AI Backend Server", env=settings.APP_ENV)
+    try:
+        from app.db.base import Base
+        from app.db.session import async_engine
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables initialized successfully")
+    except Exception as e:
+        logger.warning(f"Database table initialization warning: {str(e)}")
     yield
     logger.info("Shutting down Kirana AI Backend Server")
 
@@ -52,6 +61,21 @@ def create_app() -> FastAPI:
 
     # Custom Exception Handlers
     app.add_exception_handler(KiranaAPIException, kirana_exception_handler)
+
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request: Request, exc: Exception):
+        logger.exception(f"Unhandled exception on {request.url.path}: {str(exc)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "An internal server error occurred while processing your request.",
+                    "details": str(exc) if settings.APP_ENV != "production" else None
+                }
+            }
+        )
 
     # Include API Routers
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
