@@ -15,6 +15,7 @@ import { VoiceBillingModal } from './components/modals/VoiceBillingModal';
 import { SearchModal } from './components/modals/SearchModal';
 import { AIAdvisorModal, FloatingAIButton } from './components/ai/AIAdvisorModal';
 import { ReceiptScannerModal } from './components/modals/ReceiptScannerModal';
+import { AddProductModal } from './components/modals/AddProductModal';
 import { LoginPage } from './components/auth/LoginPage';
 import { SignUpPage } from './components/auth/SignUpPage';
 import { authAPI, User, Shop, TokenResponse } from './api/services';
@@ -36,6 +37,7 @@ export function App() {
   const [billingModalOpen, setBillingModalOpen] = useState(false);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [receiptScannerOpen, setReceiptScannerOpen] = useState(false);
+  const [addProductModalOpen, setAddProductModalOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [aiAdvisorOpen, setAiAdvisorOpen] = useState(false);
   const [aiInitialQuery, setAiInitialQuery] = useState<string | undefined>(undefined);
@@ -179,7 +181,7 @@ export function App() {
         return (
           <DashboardView
             onOpenQuickBilling={() => setBillingModalOpen(true)}
-            onOpenAddProduct={() => showToast("Add Product Form Opened")}
+            onOpenAddProduct={() => setAddProductModalOpen(true)}
             onOpenAddExpense={() => setActiveView('expenses')}
             onOpenAddCustomer={() => setActiveView('khata')}
             onOpenRecordPayment={() => showToast("Record Payment Modal Opened")}
@@ -207,7 +209,7 @@ export function App() {
       case 'products':
         return (
           <InventoryView
-            onAddProduct={() => showToast("Add New Product SKU modal opened")}
+            onAddProduct={() => setAddProductModalOpen(true)}
             onOpenReceiptScanner={() => setReceiptScannerOpen(true)}
           />
         );
@@ -258,7 +260,7 @@ export function App() {
           onOpenQuickBilling={() => setBillingModalOpen(true)}
           onOpenVoiceBilling={() => setVoiceModalOpen(true)}
           onOpenReceiptScanner={() => setReceiptScannerOpen(true)}
-          onOpenAddProduct={() => showToast("Add Product Modal Opened")}
+          onOpenAddProduct={() => setAddProductModalOpen(true)}
           onOpenAddExpense={() => showToast("Add Expense Modal Opened")}
           onOpenAddCustomer={() => showToast("Add Customer Modal Opened")}
           onOpenRecordPayment={() => showToast("Record Payment Modal Opened")}
@@ -296,6 +298,14 @@ export function App() {
         onClose={() => setReceiptScannerOpen(false)}
         onPurchaseConfirmed={(pId) => {
           showToast(`Purchase order confirmed & stock updated!`);
+        }}
+      />
+
+      <AddProductModal
+        isOpen={addProductModalOpen}
+        onClose={() => setAddProductModalOpen(false)}
+        onProductAdded={() => {
+          showToast(`Product SKU saved to inventory successfully!`);
         }}
       />
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, RefreshCw, Camera } from 'lucide-react';
 import { ProductItem } from '../../types/kirana';
 import { productsAPI, Product } from '../../api/services';
+import { AddProductModal } from '../modals/AddProductModal';
 
 const FALLBACK_PRODUCTS: ProductItem[] = [
   { id: 'p1', name: 'Maggi 2-Min Masala Noodle 70g', category: 'Packaged Food', price: 14, costPrice: 11, stock: 18, minStockThreshold: 30, unit: 'packets', brand: 'Nestle', status: 'low', salesCountToday: 38, barcode: '890105800001' },
@@ -10,7 +11,7 @@ const FALLBACK_PRODUCTS: ProductItem[] = [
 ];
 
 interface InventoryViewProps {
-  onAddProduct: () => void;
+  onAddProduct?: () => void;
   onOpenReceiptScanner?: () => void;
 }
 
@@ -19,6 +20,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onAddProduct, onOp
   const [filterStatus, setFilterStatus] = useState<'all' | 'low' | 'critical'>('all');
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
 
   const fetchProducts = () => {
     setLoading(true);
@@ -63,6 +65,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onAddProduct, onOp
     fetchProducts();
   }, []);
 
+  const handleOpenAdd = () => {
+    if (onAddProduct) {
+      onAddProduct();
+    }
+    setIsAddModalOpen(true);
+  };
+
   const filtered = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase());
     if (filterStatus === 'low') return matchesSearch && p.status === 'low';
@@ -96,7 +105,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onAddProduct, onOp
             </button>
           )}
           <button
-            onClick={onAddProduct}
+            onClick={handleOpenAdd}
             className="px-3.5 py-1.5 bg-[#111111] hover:bg-black text-white text-xs font-bold font-mono rounded-[6px] border border-[#111111] shadow-[2px_2px_0_#111111] transition-transform flex items-center gap-1.5 shrink-0 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-[#F4C84A]" />
@@ -105,95 +114,76 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onAddProduct, onOp
         </div>
       </div>
 
-      {/* Filter & Search */}
+      {/* Filter / Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-[8px] border border-[#111111] font-mono">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-3.5 h-3.5 text-[#111111] absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="relative w-full sm:w-72">
+          <Search className="w-4 h-4 text-[#6B6B6B] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
+            placeholder="Filter by SKU name or brand..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Filter SKU or category..."
-            className="w-full pl-8 pr-3 py-1.5 bg-[#F5F4EF] border border-[#111111] rounded-[6px] text-xs text-[#111111] focus:outline-none"
+            className="w-full pl-9 pr-3 py-1.5 bg-[#F5F4EF] rounded-[6px] border border-[#111111] text-xs font-medium text-[#111111] focus:outline-none"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 w-full sm:w-auto">
+        <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto text-xs">
           <button
             onClick={() => setFilterStatus('all')}
-            className={`px-3 py-1 text-xs font-bold rounded-[4px] border border-[#111111] transition-all cursor-pointer ${
-              filterStatus === 'all' ? 'bg-[#111111] text-white' : 'bg-[#F5F4EF] text-[#111111]'
-            }`}
+            className={`px-3 py-1 rounded-[4px] border font-bold cursor-pointer ${filterStatus === 'all' ? 'bg-[#111111] text-white border-[#111111]' : 'bg-[#F5F4EF] text-[#111111] border-[#111111]'}`}
           >
-            ALL ({products.length})
+            All Products ({products.length})
           </button>
           <button
             onClick={() => setFilterStatus('low')}
-            className={`px-3 py-1 text-xs font-bold rounded-[4px] border border-[#111111] transition-all cursor-pointer ${
-              filterStatus === 'low' ? 'bg-[#F4C84A] text-[#111111]' : 'bg-[#F5F4EF] text-[#111111]'
-            }`}
+            className={`px-3 py-1 rounded-[4px] border font-bold cursor-pointer ${filterStatus === 'low' ? 'bg-amber-400 text-amber-950 border-[#111111]' : 'bg-[#F5F4EF] text-[#111111] border-[#111111]'}`}
           >
-            LOW ({products.filter(p => p.status === 'low').length})
+            Low Stock ({products.filter(p => p.status === 'low').length})
           </button>
           <button
             onClick={() => setFilterStatus('critical')}
-            className={`px-3 py-1 text-xs font-bold rounded-[4px] border border-[#111111] transition-all cursor-pointer ${
-              filterStatus === 'critical' ? 'bg-rose-600 text-white' : 'bg-[#F5F4EF] text-[#111111]'
-            }`}
+            className={`px-3 py-1 rounded-[4px] border font-bold cursor-pointer ${filterStatus === 'critical' ? 'bg-rose-600 text-white border-[#111111]' : 'bg-[#F5F4EF] text-[#111111] border-[#111111]'}`}
           >
-            CRITICAL ({products.filter(p => p.status === 'critical').length})
+            Out of Stock ({products.filter(p => p.status === 'critical').length})
           </button>
         </div>
       </div>
 
-      {/* Inventory Table */}
-      <div className="bg-white rounded-[8px] border border-[#111111] overflow-hidden">
+      {/* Product List Table */}
+      <div className="bg-white rounded-[8px] border border-[#111111] overflow-hidden shadow-[4px_4px_0_#111111]">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-[#F5F4EF] border-b border-[#111111] text-[#6B6B6B] font-bold uppercase text-[9px]">
+          <table className="w-full text-left font-mono text-xs">
+            <thead className="bg-[#111111] text-white uppercase text-[10px] tracking-wider border-b border-[#111111]">
               <tr>
-                <th className="p-3">PRODUCT</th>
-                <th className="p-3">CATEGORY</th>
-                <th className="p-3 text-center">MRP PRICE</th>
-                <th className="p-3 text-center">COST</th>
-                <th className="p-3 text-center">STOCK</th>
-                <th className="p-3 text-center">STATUS</th>
-                <th className="p-3 text-right">ACTION</th>
+                <th className="py-3 px-4">SKU / PRODUCT NAME</th>
+                <th className="py-3 px-4">BRAND</th>
+                <th className="py-3 px-4 text-right">COST PRICE</th>
+                <th className="py-3 px-4 text-right">SELLING PRICE</th>
+                <th className="py-3 px-4 text-center">CURRENT STOCK</th>
+                <th className="py-3 px-4 text-center">STATUS</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#111111]/10">
+            <tbody className="divide-y divide-gray-200 font-sans text-xs">
               {filtered.map((item) => (
-                <tr key={item.id} className="hover:bg-[#F5F4EF] transition-colors">
-                  <td className="p-3 font-bold text-[#111111] font-sans">
-                    {item.name}
+                <tr key={item.id} className="hover:bg-[#F5F4EF]/60 transition-colors">
+                  <td className="py-3 px-4 font-bold text-[#111111]">
+                    <div>{item.name}</div>
+                    <div className="text-[10px] font-mono font-normal text-[#6B6B6B]">Barcode: {item.barcode}</div>
                   </td>
-                  <td className="p-3 text-[#6B6B6B]">{item.category}</td>
-                  <td className="p-3 text-center font-bold text-[#111111]">₹{item.price}</td>
-                  <td className="p-3 text-center text-[#6B6B6B]">₹{item.costPrice}</td>
-                  <td className="p-3 text-center font-bold text-[#111111]">
+                  <td className="py-3 px-4 text-[#6B6B6B] font-mono text-xs">{item.brand}</td>
+                  <td className="py-3 px-4 text-right font-mono font-bold text-[#111111]">₹{item.costPrice}</td>
+                  <td className="py-3 px-4 text-right font-mono font-bold text-[#111111]">₹{item.price}</td>
+                  <td className="py-3 px-4 text-center font-mono font-bold text-[#111111]">
                     {item.stock} {item.unit}
                   </td>
-                  <td className="p-3 text-center">
-                    {item.status === 'healthy' && (
-                      <span className="px-1.5 py-0.2 rounded-[2px] text-[9px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-600">
-                        HEALTHY
-                      </span>
-                    )}
-                    {item.status === 'low' && (
-                      <span className="px-1.5 py-0.2 rounded-[2px] text-[9px] font-bold bg-[#F4C84A] text-[#111111] border border-[#111111]">
-                        LOW
-                      </span>
-                    )}
-                    {item.status === 'critical' && (
-                      <span className="px-1.5 py-0.2 rounded-[2px] text-[9px] font-bold bg-rose-100 text-rose-900 border border-rose-600">
-                        CRITICAL
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 text-right">
-                    <button className="px-2.5 py-1 bg-[#111111] hover:bg-black text-white font-bold rounded-[4px] text-[10px] cursor-pointer">
-                      Reorder
-                    </button>
+                  <td className="py-3 px-4 text-center font-mono">
+                    <span className={`inline-block px-2 py-0.5 rounded-[3px] text-[10px] font-bold ${
+                      item.status === 'healthy' ? 'bg-emerald-100 text-emerald-800 border border-emerald-400' :
+                      item.status === 'low' ? 'bg-amber-100 text-amber-900 border border-amber-400' :
+                      'bg-rose-100 text-rose-800 border border-rose-400'
+                    }`}>
+                      {item.status.toUpperCase()}
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -201,6 +191,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({ onAddProduct, onOp
           </table>
         </div>
       </div>
+
+      {/* Add Product Modal */}
+      <AddProductModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onProductAdded={() => {
+          fetchProducts();
+        }}
+      />
     </div>
   );
 };
