@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
 from app.core.exceptions import KiranaAPIException, kirana_exception_handler
@@ -62,6 +64,36 @@ def create_app() -> FastAPI:
     # Custom Exception Handlers
     app.add_exception_handler(KiranaAPIException, kirana_exception_handler)
 
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        errors = exc.errors()
+        err_msg = "; ".join([f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}" for err in errors])
+        return JSONResponse(
+            status_code=422,
+            content={
+                "success": False,
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": f"Invalid request format: {err_msg}",
+                    "details": errors
+                }
+            }
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "success": False,
+                "error": {
+                    "code": "HTTP_ERROR",
+                    "message": str(exc.detail),
+                    "details": None
+                }
+            }
+        )
+
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         logger.exception(f"Unhandled exception on {request.url.path}: {str(exc)}")
@@ -71,8 +103,8 @@ def create_app() -> FastAPI:
                 "success": False,
                 "error": {
                     "code": "INTERNAL_SERVER_ERROR",
-                    "message": "An internal server error occurred while processing your request.",
-                    "details": str(exc) if settings.APP_ENV != "production" else None
+                    "message": f"Server error: {str(exc)}" if str(exc) else "An internal server error occurred.",
+                    "details": str(exc)
                 }
             }
         )
