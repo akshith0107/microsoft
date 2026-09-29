@@ -3,6 +3,7 @@ from uuid import UUID
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_current_shop
@@ -25,6 +26,7 @@ async def list_recommendations(
 ):
     res = await db.execute(
         select(Recommendation)
+        .options(selectinload(Recommendation.outcomes))
         .where(Recommendation.shop_id == shop.id)
         .order_by(Recommendation.generated_at.desc())
     )

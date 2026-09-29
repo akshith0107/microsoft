@@ -85,8 +85,12 @@ class AssistantService:
         products = list(product_res.scalars().all())
 
         matched_product = None
+        user_text = chat_in.message.lower()
         for p in products:
-            if p.name.lower() in chat_in.message.lower() or p.sku.lower() in chat_in.message.lower() or p.brand.lower() in chat_in.message.lower():
+            name_match = bool(p.name and p.name.lower() in user_text)
+            sku_match = bool(p.sku and p.sku.lower() in user_text)
+            brand_match = bool(p.brand and p.brand.lower() in user_text)
+            if name_match or sku_match or brand_match:
                 matched_product = p
                 break
 
